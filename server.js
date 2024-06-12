@@ -1,5 +1,5 @@
 const app = require('./app')
-const {db} = require('./database')
+const { db } = require('./database')
 
 
 db.authenticate().then(() => {

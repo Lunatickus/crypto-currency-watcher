@@ -1,16 +1,11 @@
 const express = require('express')
 const logger = require('morgan')
 const cors = require('cors')
-const {WebSocketServer} = require('ws');
 require('dotenv').config()
 
-const currencyRouter = require('./routes/api/currency')
+const currencyRouter = require('./routes/api/currencyRouter')
 
 const app = express()
-
-const server = require('http').createServer(app)
-
-const wss = new WebSocketServer({server})
 
 const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 

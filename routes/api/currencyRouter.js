@@ -1,13 +1,13 @@
 const express = require("express");
 
-const ctrl = require("../../controllers/currency");
+const currencyController = require("../../controllers/currencyController");
 
 const router = express.Router();
 
-router.get("/", ctrl.getAllCurrencies);
+router.get("/", currencyController.getAllCurrencies);
 
-router.get("/:currencySlug", ctrl.getAndSaveCurrencyPrice);
+router.get("/:currencySlug", currencyController.getAndSaveCurrencyPrice);
 
-router.get("/watch/:currencySlug", ctrl.watchCurrency);
+router.get("/subscribe/:currencySlug", currencyController.subscribeToCurrencyUpdates);
 
 module.exports = router;
