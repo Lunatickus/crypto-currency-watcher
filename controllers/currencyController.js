@@ -3,40 +3,67 @@ const WebSocket = require('ws');
 const Currency = require('../models/currency')
 const { HttpError, ctrlWrapper } = require("../helpers");
 
-const {API_KEY} = process.env;
+const { API_KEY } = process.env;
 
 const getAndSaveCurrencyPrice = async (req, res) => {
-    const {currencySlug} = req.params;
+    const { currencySlug } = req.params;
+
+    const { data } = await axios.get(`https://rest.coinapi.io/v1/exchangerate/${currencySlug}/USD`, {
+        headers: {
+            'X-CoinAPI-Key': API_KEY
+        }
+    });
+
     const result = await Currency.findOne({
         where: {
             asset_id_base: currencySlug
         }
     });
 
-    if(result) {
-        res.status(200).json(result)
-    } else {
-        const response = await axios.get(`https://rest.coinapi.io/v1/exchangerate/${currencySlug}/USD`, {
-            headers: {
-                'X-CoinAPI-Key': API_KEY
-            }
-        });
+    if(!data && !result) {
+        throw HttpError(404, "Not found");
+    }
 
-        if(!response.data) {
-            throw HttpError(404, "Not found");
-        }
+    if(!data) {
+        res.status(200).json(result);
+        return;
+    }
 
-        const { time, asset_id_base, asset_id_quote, rate } = response.data;
+    const { time, asset_id_base, asset_id_quote, rate } = data;
 
-        await Currency.create({
+    if(!result) {
+        const createdCurrency = await Currency.create({
             time,
             asset_id_base,
             asset_id_quote,
             rate
         });
 
-        res.status(200).json(response.data)
+        res.status(200).json(createdCurrency);
+        return
     }
+
+    if(result.time !== time || result.rate !== rate) {
+        await Currency.update({
+            time,
+            rate
+        }, {
+            where: {
+                asset_id_base: currencySlug
+            }
+        });
+
+        const updatedCurrency = await Currency.findOne({
+            where: {
+                asset_id_base: currencySlug
+            }
+        });
+
+        res.status(200).json(updatedCurrency);
+        return;
+    }
+
+    res.status(200).json(result)
 }
 
 const getAllCurrencies = async (req, res) => {
